@@ -94,3 +94,36 @@ str.replace(strOperation, 'what');//replacewhat
 str.search(strOperation);//search
 str.split(strOperation);//split
 ```
+
+* Symbol.toPrimitive
+
+>这涉及到强制类型转换,标准对象会有 number/string/default 三种
+
+```javascript
+function test(){
+  this.name = '测试'
+}
+test.prototype[Symbol.toPrimitive] = function (hint) {
+  switch(hint){
+    case 'number':
+      return 10
+    case 'string':
+      return this.name
+    case 'default':
+      return 'default'
+  }
+}
+let testt = new test();
+console.log(testt / 2);// 5
+console.log(testt + '!');// default
+console.log(String(testt));// 测试
+```
+* Symbol.toStringTag
+
+> 修改标记 Object.prototype.toString.call
+
+```javascript
+  function test(){}
+  test.prototype[Symbol.toStringTag] = 'PP'
+  console.log(Object.prototype.toString.call(new test()))//[object PP]
+```
