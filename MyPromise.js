@@ -1,6 +1,14 @@
 const PENDDING = 'pendding';
 const FULFILLED = 'resolved';
 const REJECTED = 'rejected';
+
+// 事件循环最后执行
+const eventLoopEndRun = function (handler){
+  setImmediate(()=>{
+    handler()
+  })
+}
+
 class MyPromise{
   
   constructor(handler){
@@ -77,7 +85,7 @@ class MyPromise{
 
     this.setPromiseState(currentState);
     this.setPromiseValue(data);
-    this.clearQueue(currentState);
+    eventLoopEndRun(()=>{this.clearQueue(currentState)});
 
     // 保持状态只能改变一次
     this.changeStateHandler = null;
@@ -100,7 +108,7 @@ class MyPromise{
     const currentState = this.getPromiseState();
     const promiseData = this.getPromiseValue();
 
-    if (currentState === FULFILLED) thenHandler(promiseData);
+    if (currentState === FULFILLED) eventLoopEndRun(()=>{thenHandler(promiseData)});
     else if (currentState === PENDDING) this.thenQueue.push(thenHandler);
   }
 
@@ -110,13 +118,12 @@ class MyPromise{
     const currentState = this.getPromiseState();
     const promiseData = this.getPromiseValue();
 
-    if (currentState === REJECTED) catchHandler(promiseData);
+    if (currentState === REJECTED) eventLoopEndRun(()=>{catchHandler(promiseData)});
     else if (currentState === PENDDING) this.catchQueue.push(catchHandler);
   }
 
 }
 
-console.log("我是最早的");
 
 const test1 = new MyPromise((resolve,reject)=>{
   setTimeout(()=>{
@@ -125,12 +132,11 @@ const test1 = new MyPromise((resolve,reject)=>{
 });
 
 const test2 = new MyPromise((resolve,reject)=>{
-  setTimeout(()=>{
     reject('我出错啦！')
-  }, 2000)
 })
 
 test1.then(data=>console.log(data));
 test1.catch(err=>console.log(err));
 test2.then(data=>console.log(data));
 test2.catch(err=>console.log(err));
+console.log("我是最早的");

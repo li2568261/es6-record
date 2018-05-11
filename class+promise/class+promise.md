@@ -111,7 +111,7 @@ class MyPromise{
       
       3、将 ```[[PromiseValue]]``` 赋值为方法传递进来的参数； 
       
-      4、成功操作方法的队列依次调用然后清空，捕获异常方法的队列清空；
+      4、成功操作方法的队列在 eventloop 结束后依次调用然后清空，捕获异常方法的队列清空；
   4. ```reject``` 方法基本就不赘述啦......
   5. ```then``` 方法：
 
@@ -119,10 +119,16 @@ class MyPromise{
 
       2、 加入成功操作方法队列；
 
-      3、 直接调用；
+      3、 当前eventloop 结束异步调用；
+  5. ```catch``` 方法不赘述
   
 ```javascript
-  
+  // 事件循环最后执行
+  const eventLoopEndRun = function (handler){
+    setImmediate(()=>{
+      handler()
+    })
+  }
   // ...
 
   class MyPromise{
@@ -152,8 +158,8 @@ class MyPromise{
 
       this.setPromiseState(currentState);
       this.setPromiseValue(data);
-      this.clearQueue(currentState);
-
+      setImmediate(()=>{this.clearQueue(currentState)});
+      
       // 保持状态只能改变一次
       this.changeStateHandler = null;
       this.setPromiseState = null;
@@ -192,22 +198,23 @@ class MyPromise{
 
   // 测试方法
 
+
+  const test1 = new MyPromise((resolve,reject)=>{
+    setTimeout(()=>{
+      resolve('2s 后输出了我');
+    }, 2000)
+  });
+
+  const test2 = new MyPromise((resolve,reject)=>{
+    setTimeout(()=>{
+      reject('我出错啦！')
+    }, 2000)
+  })
+
+  test1.then(data=>console.log(data));
+  test1.catch(err=>console.log(err));
+  test2.then(data=>console.log(data));
+  test2.catch(err=>console.log(err));
   console.log("我是最早的");
 
-const test1 = new MyPromise((resolve,reject)=>{
-  setTimeout(()=>{
-    resolve('2s 后输出了我');
-  }, 2000)
-});
-
-const test2 = new MyPromise((resolve,reject)=>{
-  setTimeout(()=>{
-    reject('我出错啦！')
-  }, 2000)
-})
-
-test1.then(data=>console.log(data));
-test1.catch(err=>console.log(err));
-test2.then(data=>console.log(data));
-test2.catch(err=>console.log(err));
 ```
